@@ -1,4 +1,5 @@
 import { Logo } from './logo'
+import { invoke } from "@tauri-apps/api/tauri";
 
 export function App() {
   return (
@@ -14,6 +15,13 @@ export function App() {
         >
           Learn Preact
         </a>
+        <br />
+        <button onclick={() => invoke("connect")}>
+          Connect
+        </button>        <br />
+        <button onclick={() => invoke("disconnect")}>
+          Disconnect
+        </button>
       </p>
     </>
   )
