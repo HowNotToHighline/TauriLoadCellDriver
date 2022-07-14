@@ -31,13 +31,13 @@ fn main() {
 }
 
 #[tauri::command]
-fn connect(state: State<MyState>) -> bool {
+fn connect(state: State<MyState>) -> Result<(), ()> {
     println!("connect");
     let mut driver_option = state.driver.lock().unwrap();
 
-    if let Some(_) = *driver_option {
+    if driver_option.is_some() {
         // Already connected
-        return false;
+        return Result::Err(());
     }
 
     match LabJack::connect("T7", "ETHERNET", "10.0.5.69") {
@@ -45,18 +45,18 @@ fn connect(state: State<MyState>) -> bool {
             println!("{driver:?}");
             // state.inner().driver = driver;
             *driver_option = Some(Box::new(driver));
-            true
+            Result::Ok(())
         }
         Err(_e) => {
             // TODO: Use LJM_ErrorToString
             println!("An error ocurred");
-            false
+            Result::Err(())
         }
     }
 }
 
 #[tauri::command]
-fn disconnect(state: State<MyState>) -> bool {
+fn disconnect(state: State<MyState>) -> Result<(), ()> {
     println!("disconnect");
     let mut driver_option = state.driver.lock().unwrap();
 
@@ -64,12 +64,12 @@ fn disconnect(state: State<MyState>) -> bool {
         match LabJack::disconnect(driver.as_ref()) {
             Ok(_) => {
                 *driver_option = None;
-                true
+                Result::Ok(())
             },
-            Err(_) => false,
+            Err(_) => Result::Err(()),
         }
     } else {
         // Not connected
-        false
+        Result::Err(())
     }
 }
