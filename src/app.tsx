@@ -27,21 +27,32 @@ const configs: Array<{
   driverConfig: DriverConfig,
 }> = [
   {
-    name: "LabJack Jetse [USB]",
+    name: "LabJack Jetse [ETHERNET]",
     driverConfig: {
       driver: "LabJack",
       device_type: "T7",
       connection_type: "ETHERNET",
       identifier: "10.0.5.69",
       offset: 0.000033,
-      scalar: 1/0.000394,
+      scalar: 1/0.000394 * 10,
       // scalar: 1e10,
     },
   },
   {
+    name: "LabJack Ryan [ETHERNET]",
+    driverConfig: {
+      driver: "LabJack",
+      device_type: "T7",
+      connection_type: "ETHERNET",
+      identifier: "10.0.5.69",
+      offset: -0.37809891,
+      scalar: 3230.372162717,
+    },
+  },
+  /*{
     name: "Dummy",
     driverConfig: {driver: "Dummy"},
-  },
+  },*/
 ]
 
 const LabeledItem = ({label, children}: { label: ComponentChildren, children: ComponentChildren }) =>
