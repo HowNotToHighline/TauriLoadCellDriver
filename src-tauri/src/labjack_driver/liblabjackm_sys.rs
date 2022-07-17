@@ -64,6 +64,7 @@ extern "C" {
     #[doc = "       other words, it is fast but will not represent changes to serial"]
     #[doc = "       number or IP address since the device was opened."]
     #[doc = " Warn: This function ignores null pointers"]
+    #[allow(dead_code)]
     pub fn LJM_GetHandleInfo(
         Handle: ::std::os::raw::c_int,
         DeviceType: *mut ::std::os::raw::c_int,
@@ -194,6 +195,7 @@ extern "C" {
     #[doc = "       If the constants file could not be opened, this returns a"]
     #[doc = "       null-terminated string saying so and where that constants file was"]
     #[doc = "       expected to be."]
+    #[allow(dead_code)]
     pub fn LJM_ErrorToString(
         ErrorCode: ::std::os::raw::c_int,
         ErrorString: *mut ::std::os::raw::c_char,
