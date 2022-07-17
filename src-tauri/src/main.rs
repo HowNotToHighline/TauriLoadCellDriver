@@ -6,10 +6,11 @@
 mod labjack_driver;
 
 use crate::labjack_driver::LabJack;
+use chrono::{DateTime, Utc};
 use csv::Writer;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use tauri::State;
+use tauri::{State, Window};
 
 #[derive(Debug)]
 pub struct MyState {
@@ -28,6 +29,12 @@ pub enum DriverConfig {
         offset: f64,
         scalar: f64,
     },
+}
+
+#[derive(Clone, serde::Serialize)]
+struct ForceUpdateMessage {
+    peak: f64,
+    latest: f64,
 }
 
 fn main() {
@@ -102,14 +109,21 @@ fn disconnect(state: State<MyState>) -> Result<(), ()> {
 }
 
 #[tauri::command]
-async fn start(state: State<'_, MyState>, tag: String, samplerate: u32) -> Result<(), i32> {
+async fn start(
+    state: State<'_, MyState>,
+    window: Window,
+    tag: String,
+    samplerate: u32,
+) -> Result<(), i32> {
     println!("start 1");
 
-    let stop = Arc::new(AtomicBool::new(false));
-    let mut driver;
+    let now: DateTime<Utc> = Utc::now();
 
-    // TODO: Make path based on date/time
-    let path = tag + ".csv";
+    let path = format!(
+        "logs{s}{datetime}_{tag}.csv",
+        s = std::path::MAIN_SEPARATOR,
+        datetime = now.format("%d-%m-%Y_%H-%M-%S")
+    );
     let mut writer = match Writer::from_path(path) {
         Ok(writer) => writer,
         Err(_) => return Err(0),
@@ -118,6 +132,8 @@ async fn start(state: State<'_, MyState>, tag: String, samplerate: u32) -> Resul
     println!("start 2");
 
     // This is in a separate block so the mutex's get unlocked automatically
+    let stop = Arc::new(AtomicBool::new(false));
+    let mut driver;
     {
         let mut driver_option = state.driver.lock().unwrap();
         let mut thread_stop_option = state.thread_stop.lock().unwrap();
@@ -140,16 +156,15 @@ async fn start(state: State<'_, MyState>, tag: String, samplerate: u32) -> Resul
 
     println!("start 3");
 
-
     // TODO: Actually write header with values
     writer.write_record(&["00:00:00"]); // Serial nr
-    writer.write_record(&["25.01.22"]); // Date
-    writer.write_record(&["10:27:28"]); // Time
+    writer.write_record(&[now.format("%d:%m:%y").to_string()]); // Date
+    writer.write_record(&[now.format("%H:%M:%S").to_string()]); // Time
     writer.write_record(&["LogNo=001"]); // Can we use the tag here? Or should it always be an int?
     writer.write_record(&["Unit=kN"]);
     writer.write_record(&["Mode=ABS"]);
     writer.write_record(&["RelZero=0"]); // Can this be omitted?
-    writer.write_record(&["Speed=0"]); // TODO: Use samplerate
+    writer.write_record(&[format!("Speed={samplerate}")]);
     writer.write_record(&["Trig=0"]); //
     writer.write_record(&["Stop=0"]); // What if there's no stop trigger force?
     writer.write_record(&["Pre=0"]); //
@@ -177,16 +192,22 @@ async fn start(state: State<'_, MyState>, tag: String, samplerate: u32) -> Resul
                 local_peak_force = sample;
             }
         }
+
         if local_peak_force > peak_force {
             peak_force = local_peak_force;
-            // TODO: Send messages for peak force
         }
+        window.emit(
+            "peak-force",
+            ForceUpdateMessage {
+                peak: peak_force,
+                latest: local_peak_force,
+            },
+        );
+
         // TODO: Facilitate real time graph
         // TODO: Auto trigger
         // TODO: Pre and post trigger store (ring buffer)
     }
-
-    println!("start 5");
 
     driver.stop_stream();
     // The writer automatically closes when going out of scope
