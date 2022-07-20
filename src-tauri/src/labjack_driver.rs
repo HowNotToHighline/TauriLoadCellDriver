@@ -62,14 +62,14 @@ impl LabJack {
         }
     }
 
-    pub fn tare(&mut self) -> Result<(), i32> {
+    pub fn tare(&mut self) -> Result<f64, i32> {
         println!("LabJack::tare");
         match self.read_raw() {
             Ok(raw) => {
                 self.offset = raw;
                 println!("LabJack::tare raw: {raw}");
-                Ok(())
-            }
+                Ok(raw)
+            },
             Err(e) => Err(e),
         }
     }

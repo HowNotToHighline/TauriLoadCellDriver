@@ -244,12 +244,12 @@ fn stop(state: State<MyState>) -> Result<(), ()> {
 }
 
 #[tauri::command]
-fn tare(state: State<MyState>) -> Result<(), ()> {
+fn tare(state: State<MyState>) -> Result<f64, ()> {
     let mut driver_option = state.driver.lock().unwrap();
     let mut driver = driver_option.as_mut().ok_or(())?;
 
     match driver.tare() {
-        Ok(()) => Ok(()),
+        Ok(raw) => Ok(raw),
         Err(_) => Err(()),
     }
 }
