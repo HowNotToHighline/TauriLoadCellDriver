@@ -119,11 +119,19 @@ async fn start(
 
     let now: DateTime<Utc> = Utc::now();
 
+    let dir = format!(".{s}logs{s}",s = std::path::MAIN_SEPARATOR);
+    println!("dir: {dir}");
+
+    match std::fs::create_dir_all(&dir) {
+        Ok(_) => (),
+        Err(_) => return Err(0),
+    }
+
     let path = format!(
-        "logs{s}{datetime}_{tag}.csv",
-        s = std::path::MAIN_SEPARATOR,
+        "{dir}{datetime}_{tag}.csv",
         datetime = now.format("%d-%m-%Y_%H-%M-%S")
     );
+
     let mut writer = match Writer::from_path(path) {
         Ok(writer) => writer,
         Err(_) => return Err(0),
