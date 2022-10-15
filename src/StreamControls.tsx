@@ -23,7 +23,7 @@ export const StreamControls = ({disabled, connected, startedStream, stoppedStrea
     startedStream();
     setStarted(true);
     try {
-      await invoke("start", {tag: labelRef.current.value, samplerate: 1000});
+      await invoke("start", {tag: labelRef.current.value, samplerate: parseInt(labelRef.current.value)});
     } catch (_e) {
     }
     stoppedStream();
