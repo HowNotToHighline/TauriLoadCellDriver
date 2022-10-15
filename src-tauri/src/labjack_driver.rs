@@ -143,6 +143,7 @@ impl LabJack {
     }
 
     fn read_raw(&self) -> Result<f64, i32> {
+        self.write_name("AIN0_NEGATIVE_CH", 1.0)?;
         self.write_name("AIN0_RANGE", 0.01)?;
         // https://labjack.com/support/datasheets/t-series/appendix-a-1#adc-conversions
         // Resolution index 12 takes 159 ms, but provides 19.7 bits of resolution
