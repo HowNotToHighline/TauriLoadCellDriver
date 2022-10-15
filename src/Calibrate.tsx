@@ -12,13 +12,13 @@ type Props = {
 function calculateParameters(points: Point[]): Parameters {
   if(points.length < 2) throw new Error("Need at least two points for a calibration");
 
-  const averageForce = points.reduce((acc, {force}) => force + acc, 0) / points.length;
   const averageRaw = points.reduce((acc, {raw}) => raw + acc, 0) / points.length;
-  const varianceForce = points.reduce((acc, {force}) => (force - averageForce) ** 2 + acc, 0);
-  const covarianceForceRaw = points.reduce((acc, {force, raw}) => (force - averageForce) * (raw - averageRaw) + acc, 0);
+  const averageForce = points.reduce((acc, {force}) => force + acc, 0) / points.length;
+  const varianceRaw = points.reduce((acc, {raw}) => (raw - averageRaw) ** 2 + acc, 0);
+  const covarianceRawForce = points.reduce((acc, {force, raw}) => (force - averageForce) * (raw - averageRaw) + acc, 0);
 
-  const slope = covarianceForceRaw / varianceForce;
-  const intercept = averageRaw - slope * averageForce;
+  const slope = covarianceRawForce / varianceRaw;
+  const intercept = averageForce - slope * averageRaw;
 
   return {
     scalar: slope,
