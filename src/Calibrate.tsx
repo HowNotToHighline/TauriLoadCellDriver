@@ -38,7 +38,7 @@ export const Calibrate = ({cancel, finish}: Props) => {
       <input type={"number"} ref={forceRef}/>
     </LabeledItem>
     <LabeledItem label={""}>
-      <button onclick={
+      <button onClick={
         async () => {
           const raw: number = await invoke("tare");
           setPoints(x => x.concat({force: parseFloat(forceRef.current.value), raw}));
@@ -46,8 +46,8 @@ export const Calibrate = ({cancel, finish}: Props) => {
       }>Add point
       </button>
     </LabeledItem>
-    <LabeledItem label={<button style={{width: "100%"}} onclick={() => cancel()}>Cancel</button>}>
-      <button style={{width: "100%"}} onclick={() => finish(calculateParameters(points))}>Finish</button>
+    <LabeledItem label={<button style={{width: "100%"}} onClick={() => cancel()}>Cancel</button>}>
+      <button style={{width: "100%"}} onClick={() => finish(calculateParameters(points))}>Finish</button>
     </LabeledItem>
   </>;
 }

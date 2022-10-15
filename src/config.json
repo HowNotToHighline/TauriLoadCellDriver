@@ -1,0 +1,24 @@
+{
+  "labjack-jetse": {
+    "displayName": "LabJack Jetse [ETHERNET]",
+    "driver": "LabJack",
+    "device_type": "T7",
+    "connection_type": "ETHERNET",
+    "identifier": "10.0.5.69",
+    "offset": 0.000033,
+    "scalar": 2538.0710659898477
+  },
+  "labjack-ryan": {
+    "displayName": "LabJack Ryan [ETHERNET]",
+    "driver": "LabJack",
+    "device_type": "T7",
+    "connection_type": "ETHERNET",
+    "identifier": "10.0.5.69",
+    "offset": -0.37809891,
+    "scalar": 3230.372162717
+  },
+  "dummy": {
+    "displayName": "Dummy",
+    "driver": "Dummy"
+  }
+}
