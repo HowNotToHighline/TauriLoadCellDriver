@@ -75,7 +75,7 @@ export function App() {
                        await setCalibration(configRef.current.value, parameters.scalar, parameters.offset);
                        setState(x => ({...x, calibrating: false}));
                      }}/> :
-          <StreamControls disabled={busy || !connected} connected={connected}
+          <StreamControls disabled={connecting || !connected} connected={connected}
                           startedStream={() => setState(x => ({...x, started: true}))}
                           stoppedStream={() => setState(x => ({...x, started: false}))}/>
         }
