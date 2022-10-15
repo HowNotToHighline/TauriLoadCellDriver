@@ -64,7 +64,7 @@ export function App() {
     connected: false,
     connecting: false,
     started: false,
-    calibrating: false
+    calibrating: false,
   });
   const busy = connecting || started;
 
@@ -106,7 +106,7 @@ export function App() {
               <button onClick={disconnect} disabled={busy}>
                 Disconnect
               </button>
-              <button onclick={() => setState(x => ({...x, calibrating: true}))} disabled/*={busy}*/>
+              <button onclick={() => setState(x => ({...x, calibrating: true}))} disabled={busy || calibrating}>
                 Calibrate
               </button>
             </>
@@ -118,8 +118,13 @@ export function App() {
 
         <hr/>
 
-        {calibrating ? <Calibrate/> :
-          <StreamControls disabled={connected || !connected} connected={connected}
+        {calibrating ?
+          <Calibrate cancel={() => setState(x => ({...x, calibrating: false}))}
+                     finish={(parameters) => {
+                       // TODO: Store new parameters
+                       setState(x => ({...x, calibrating: false}));
+                     }}/> :
+          <StreamControls disabled={busy || !connected} connected={connected}
                           startedStream={() => setState(x => ({...x, started: true}))}
                           stoppedStream={() => setState(x => ({...x, started: false}))}/>
         }
