@@ -4,8 +4,10 @@
 )]
 
 mod labjack_driver;
+mod calibration;
 
 use crate::labjack_driver::LabJack;
+use crate::calibration::*;
 use chrono::{DateTime, Utc};
 use csv::Writer;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -14,7 +16,7 @@ use tauri::{State, Window};
 
 #[derive(Debug)]
 pub struct MyState {
-    driver: Arc<Mutex<Option<LabJack>>>,
+    driver: Arc<Mutex<Option<LabJack<LinearCalibrationCurve>>>>,
     thread_stop: Arc<Mutex<Option<Arc<AtomicBool>>>>,
 }
 
@@ -26,8 +28,7 @@ pub enum DriverConfig {
         device_type: String,
         connection_type: String,
         identifier: String,
-        offset: f64,
-        scalar: f64,
+        calibration_points: Vec<CalibrationPoint>,
     },
 }
 
@@ -71,10 +72,10 @@ fn connect(state: State<MyState>, driver_config: DriverConfig) -> Result<(), ()>
             device_type,
             connection_type,
             identifier,
-            offset,
-            scalar,
+            calibration_points,
         } => {
-            match LabJack::connect(&device_type, &connection_type, &identifier, offset, scalar) {
+            let calibration_curve = LinearCalibrationCurve::new(calibration_points);
+            match LabJack::connect(&device_type, &connection_type, &identifier, calibration_curve) {
                 Ok(driver) => {
                     println!("{driver:?}");
                     // state.inner().driver = driver;

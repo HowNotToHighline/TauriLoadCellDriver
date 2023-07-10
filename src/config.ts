@@ -5,22 +5,11 @@ import {
   writeTextFile,
 } from "@tauri-apps/api/fs";
 import { useEffect, useState } from "preact/compat";
-import defaultConfig from "./config.json";
+import { configType, defaultConfig } from "./defaultConfig";
+import { CalibrationPoint } from "./Calibrate";
 
 export function useDrivers() {
-  const [config, setConfig] = useState<{
-    [key: string]:
-      | {
-          type: "LabJack";
-          displayName: string;
-          scalar: number;
-          offset: number;
-        }
-      | {
-          type: "Dummy";
-          displayName: string;
-        };
-  }>({});
+  const [config, setConfig] = useState<configType>({});
 
   useEffect(() => {
     readTextFile("drivers.json", { dir: BaseDirectory.App })
@@ -35,28 +24,35 @@ export function useDrivers() {
   ]);
   const getDriverConfig = (id: string) => {
     if (!config.hasOwnProperty(id)) throw new Error("No such driver");
-    const a = config[id] as any;
-    if (a.driver === "LabJack") {
-      return {
-        driver: "LabJack",
-        device_type: a.device_type,
-        connection_type: a.connection_type,
-        identifier: a.identifier,
-        offset: a.offset,
-        scalar: a.scalar,
-      };
-    } else {
-      return {
-        driver: "Dummy",
-      };
+    const a = config[id];
+    switch(a.driver) {
+      case "LabJack":
+        return {
+          driver: "LabJack",
+          device_type: a.deviceType,
+          connection_type: a.connectionType,
+          identifier: a.identifier,
+          calibration_points: a.calibrationPoints,
+        };
+      case "Dummy":
+        return {
+          driver: "Dummy",
+        };
     }
   };
-  const setCalibration = async (id: string, scalar: number, offset: number) => {
+
+  const setCalibration = async (
+    id: string,
+    calibrationPoints: CalibrationPoint[],
+  ) => {
     if (!config.hasOwnProperty(id)) throw new Error("No such driver");
     const driverConfig = config[id];
-    if (driverConfig.type === "Dummy")
+    if (driverConfig.driver === "Dummy")
       throw new Error("Dummy driver can't be calibrated");
-    const newConfig = { ...config, [id]: { ...driverConfig, scalar, offset } };
+    const newConfig = {
+      ...config,
+      [id]: { ...driverConfig, calibrationPoints },
+    };
 
     await createDir("test", { dir: BaseDirectory.App, recursive: true });
     await writeTextFile("drivers.json", JSON.stringify(newConfig), {

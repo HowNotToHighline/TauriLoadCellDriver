@@ -85,12 +85,8 @@ export function App() {
         {calibrating ? (
           <Calibrate
             cancel={() => setState((x) => ({ ...x, calibrating: false }))}
-            finish={async (parameters) => {
-              await setCalibration(
-                configRef.current.value,
-                parameters.scalar,
-                parameters.offset,
-              );
+            finish={async (points) => {
+              await setCalibration(configRef.current.value, points);
               setState((x) => ({ ...x, calibrating: false }));
             }}
           />

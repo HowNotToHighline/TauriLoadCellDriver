@@ -1,5 +1,6 @@
 mod liblabjackm_sys;
 
+use crate::calibration::CalibrationCurve;
 use crate::labjack_driver::liblabjackm_sys::{
     LJM_NameToAddress, LJM_eStreamRead, LJM_eStreamStart, LJM_eStreamStop,
 };
@@ -9,24 +10,22 @@ use std::mem::MaybeUninit;
 use std::os::raw::c_int;
 
 #[derive(Debug)]
-pub struct LabJack {
+pub struct LabJack<C> where C: CalibrationCurve {
     // LabJackM
     handle: i32,
     // Calibration
-    offset: f64,
-    scalar: f64,
+    calibration_curve: C,
     // Streaming related
     scans_per_read: Option<u32>,
 }
 
-impl LabJack {
+impl<C: CalibrationCurve> LabJack<C> {
     pub fn connect(
         device_type: &str,
         connection_type: &str,
         identifier: &str,
-        offset: f64,
-        scalar: f64,
-    ) -> Result<LabJack, i32> {
+        calibration_curve: C,
+    ) -> Result<LabJack<C>, i32> {
         let device_type = CString::new(device_type).unwrap();
         let connection_type = CString::new(connection_type).unwrap();
         let identifier = CString::new(identifier).unwrap();
@@ -42,9 +41,8 @@ impl LabJack {
             ) {
                 0 => Result::Ok(LabJack {
                     handle: handle.assume_init(),
-                    offset,
-                    scalar,
                     scans_per_read: None,
+                    calibration_curve,
                 }),
                 x => Result::Err(x),
             }
@@ -66,7 +64,7 @@ impl LabJack {
         println!("LabJack::tare");
         match self.read_raw() {
             Ok(raw) => {
-                self.offset = raw;
+                self.calibration_curve.tare(raw);
                 println!("LabJack::tare raw: {raw}");
                 Ok(raw)
             },
@@ -83,7 +81,7 @@ impl LabJack {
         // These are definitely not defaults
         self.write_name(
             "STREAM_RESOLUTION_INDEX",
-            LabJack::optimal_resolution_index(samplerate),
+            Self::optimal_resolution_index(samplerate),
         )?;
         self.write_name("AIN0_NEGATIVE_CH", 1.0)?;
         self.write_name("AIN0_RANGE", 0.1)?;
@@ -93,7 +91,7 @@ impl LabJack {
 
         let mut samplerate = samplerate as f64;
 
-        let scan_list = [LabJack::name_to_address("AIN0")?];
+        let scan_list = [Self::name_to_address("AIN0")?];
 
         unsafe {
             match LJM_eStreamStart(
@@ -133,7 +131,7 @@ impl LabJack {
             ) {
                 0 => {
                     for sample in &mut data {
-                        *sample = (*sample - self.offset) * self.scalar;
+                        *sample = self.calibration_curve.apply(*sample);
                     }
                     Ok(data)
                 }
